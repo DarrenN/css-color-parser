@@ -1,0 +1,213 @@
+{
+    const PRECISION = 2;
+
+    function hexAlpha(alpha) {
+    	if (!alpha) return 1;
+    	let a = parseInt(alpha, 16);
+      let omax = 255;
+      let omin = 0;
+      let nmax = 100;
+      let nmin = 0;
+      let orange = (omax - omin)
+		  let nrange = (nmax - nmin)
+		  return ((((a - omin) * nrange) / orange) + nmin) / 100;
+    }
+
+   	function percentToNumber(n) {
+    	if (!n) return 0;
+      let omax = 1;
+      let omin = 0;
+      let nmax = 255;
+      let nmin = 0;
+      let orange = (omax - omin)
+	    let nrange = (nmax - nmin)
+		  return Math.round((((n - omin) * nrange) / orange) + nmin);
+    }
+
+    function funcAlpha(func, alpha) {
+    	if (alpha && func[func.length - 1] !== 'a') {
+        	return func + 'a';
+        }
+		  return func
+    }
+
+    function defaultAlpha(a) { return (a) ? a : 1; }
+    function constrainL(l) { return (l > 100) ? 100 : l }
+    function safePercent(n) { return parseFloat(n.toFixed(PRECISION)); }
+    function hexToPercent(n) { return safePercent(parseInt(n, 16) / 255); }
+}
+
+Func "function"
+  = color:(HWB / HSL / RGB / HEX / LAB / LCH / CMYK / GRAY)* {
+		return color;
+  }
+
+Parens "parens"
+  = [()]
+
+RGB "rgb"
+  = _ func:("rgba" / "rgb") _ Parens _ red:rgbInt _ green:rgbInt _ blue:rgbInt _ alpha:Alpha? _ Parens {
+  	return {
+       	[funcAlpha(func, alpha)]: {
+         r: red,
+         g: green,
+         b: blue,
+         alpha: defaultAlpha(alpha)
+        }
+    }
+  }
+
+HSL "hsl"
+  = _ func:("hsla" / "hsl") _ Parens _ hue:Hue _ saturation:Percent _ lightness:Percent _ alpha:Alpha? _ Parens {
+ 	return {
+        [funcAlpha(func, alpha)]: {
+         h: hue,
+         s: saturation,
+         l: lightness,
+         alpha: defaultAlpha(alpha)
+        }
+    };
+  }
+
+HWB
+  = _ func:"hwb" _ Parens _ hue:Hue _ white:Percent _ black:Percent _ alpha:Alpha? _ Parens {
+ 	return {
+        [func]: {
+         h: hue,
+         w: white,
+         b: black,
+         alpha: defaultAlpha(alpha)
+        }
+    };
+  }
+
+LAB
+  = _ func:"lab" _ Parens _ l:Integer _ a:Integer _ b:Integer _ alpha:Alpha? _ Parens {
+  	return {
+        [func]: {
+         l: constrainL(l),
+         a,
+         b,
+         alpha: defaultAlpha(alpha)
+        }
+    };
+ }
+
+ LCH
+   = _ func:"lch" _ Parens _ l:Integer _ c:Integer _ h:Hue _ alpha:Alpha? _ Parens {
+  	return {
+        [func]: {
+         l: constrainL(l),
+         c: (c > 230) ? 230 : c,
+         h,
+         alpha: defaultAlpha(alpha)
+        }
+    };
+ }
+
+HEX
+  = _ "#" hex:(HexDig)+ {
+  	var func = 'rgba';
+  	var red, green, blue, alpha;
+
+    if (hex.length < 3 ||
+    	hex.length === 5 ||
+        hex.length === 7 ||
+        hex.length > 8) {
+    	return undefined;
+    }
+
+	if (hex.length == 3) {
+    	let [r, g, b] = hex;
+    	red = "" + r + r;
+        green = "" + g + g;
+        blue = "" + b + b;
+    }
+
+    if (hex.length == 4) {
+    	let [r, g, b, a] = hex;
+    	red = "" + r + r;
+        green = "" + g + g;
+        blue = "" + b + b;
+        alpha = "" + a + a;
+    }
+
+   	if (hex.length == 6) {
+    	let [r1, r2, g1, g2, b1, b2] = hex;
+    	red = "" + r1 + r2;
+        green = "" + g1 + g2;
+        blue = "" + b1 + b2;
+    }
+
+    if (hex.length == 8) {
+    	let [r1, r2, g1, g2, b1, b2, a1, a2] = hex;
+    	red = "" + r1 + r2;
+        green = "" + g1 + g2;
+        blue = "" + b1 + b2;
+        alpha = "" + a1 + a2;
+    }
+
+  	return {
+    	[func]: {
+         r: hexToPercent(red),
+         g: hexToPercent(green),
+         b: hexToPercent(blue),
+         alpha: hexAlpha(alpha)
+        }
+    }
+  }
+
+CMYK
+   = _ func:"device-cmyk" _ Parens _ c:CmykC _ m:CmykC _ y:CmykC _ k:CmykC _ alpha:Alpha? _ Parens {
+  	return {
+        [func]: {
+         c,
+         m,
+         y,
+         k,
+         alpha: defaultAlpha(alpha)
+        }
+    };
+ }
+
+GRAY
+  = _ func:"gray" _ Parens _ l:Integer _ alpha:Alpha? _ Parens {
+  	return {
+    	[func]: { l, alpha: defaultAlpha(alpha) }
+    }
+  }
+
+Hue "hue"
+  = int:Integer { return (int > 360) ? 360 : int; }
+
+rgbInt "rgbint"
+  = percent:Percent { return safePercent(percent); }
+  / int:Integer { return (int > 255) ? 1 : safePercent(int / 255) }
+
+CmykC "cmyk-component"
+  = percent:Percent { return safePercent(percent); }
+  / float:Float { return (float > 1) ? 1 : float; }
+  / int:Integer { return (int > 1) ? 1 : int; }
+
+Alpha "alpha"
+  = percent:Percent { return percent; }
+  / float:Float { return (float > 1) ? 1 : float; }
+  / int:Integer { return (int > 1) ? 1 : int; }
+
+Float "float"
+  = [-+]?[0-9]*.?[0-9]+ { return parseFloat(text()); }
+
+Percent "percent"
+  = ([0-9]+"%") {
+  	var p = parseInt(text(), 10) / 100;
+    return (p > 1) ? 1 : p;
+  }
+
+HexDig
+  = [0-9a-f]i
+
+Integer "integer"
+  = [0-9]+ { return parseInt(text(), 10); }
+
+_ "whitespace"
+  = [ \t\n\r,]*

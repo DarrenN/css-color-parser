@@ -1,0 +1,28 @@
+{
+  "name": "css-color-parser",
+  "version": "0.0.1",
+  "description": "Parse CSS Level 4 Color function strings",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DarrenN/css-color-parser.git"
+  },
+  "keywords": [
+    "css",
+    "color",
+    "parser",
+    "peg"
+  ],
+  "author": "DarrenN",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/DarrenN/css-color-parser/issues"
+  },
+  "homepage": "https://github.com/DarrenN/css-color-parser#readme",
+  "devDependencies": {
+    "pegjs": "0.10.0"
+  }
+}
