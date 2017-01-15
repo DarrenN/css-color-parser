@@ -262,7 +262,7 @@ function peg$parse(input, options) {
                r: hexToPercent(red),
                g: hexToPercent(green),
                b: hexToPercent(blue),
-               alpha: hexAlpha(alpha)
+               alpha: safePercent(hexAlpha(alpha))
               }
           }
         },
