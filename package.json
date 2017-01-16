@@ -23,6 +23,13 @@
   },
   "homepage": "https://github.com/DarrenN/css-color-parser#readme",
   "devDependencies": {
-    "pegjs": "0.10.0"
+    "babel-core": "6.21.0",
+    "babel-loader": "6.2.10",
+    "babel-plugin-transform-class-properties": "6.19.0",
+    "babel-preset-env": "1.1.8",
+    "flow-babel-webpack-plugin": "1.0.1",
+    "flow-bin": "0.37.4",
+    "pegjs": "0.10.0",
+    "webpack": "1.14.0"
   }
 }

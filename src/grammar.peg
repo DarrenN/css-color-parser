@@ -117,7 +117,7 @@ HEX
     	return undefined;
     }
 
-	if (hex.length == 3) {
+	  if (hex.length == 3) {
     	let [r, g, b] = hex;
     	red = "" + r + r;
         green = "" + g + g;
