@@ -175,6 +175,7 @@ Hue "hue"
 
 rgbInt "rgbint"
   = percent:Percent { return safePercent(percent); }
+  / float:Float { return (float > 1) ? 1 : float; }
   / int:Integer { return (int > 255) ? 1 : safePercent(int / 255) }
 
 CmykC "cmyk-component"

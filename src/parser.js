@@ -282,9 +282,9 @@ function peg$parse(input, options) {
       peg$c37 = function(deg) { return deg },
       peg$c38 = peg$otherExpectation("rgbint"),
       peg$c39 = function(percent) { return safePercent(percent); },
-      peg$c40 = function(int) { return (int > 255) ? 1 : safePercent(int / 255) },
-      peg$c41 = peg$otherExpectation("cmyk-component"),
-      peg$c42 = function(float) { return (float > 1) ? 1 : float; },
+      peg$c40 = function(float) { return (float > 1) ? 1 : float; },
+      peg$c41 = function(int) { return (int > 255) ? 1 : safePercent(int / 255) },
+      peg$c42 = peg$otherExpectation("cmyk-component"),
       peg$c43 = function(int) { return (int > 1) ? 1 : int; },
       peg$c44 = peg$otherExpectation("alpha"),
       peg$c45 = function(percent) { return percent; },
@@ -1370,12 +1370,21 @@ function peg$parse(input, options) {
     s0 = s1;
     if (s0 === peg$FAILED) {
       s0 = peg$currPos;
-      s1 = peg$parseInteger();
+      s1 = peg$parseFloat();
       if (s1 !== peg$FAILED) {
         peg$savedPos = s0;
         s1 = peg$c40(s1);
       }
       s0 = s1;
+      if (s0 === peg$FAILED) {
+        s0 = peg$currPos;
+        s1 = peg$parseInteger();
+        if (s1 !== peg$FAILED) {
+          peg$savedPos = s0;
+          s1 = peg$c41(s1);
+        }
+        s0 = s1;
+      }
     }
     peg$silentFails--;
     if (s0 === peg$FAILED) {
@@ -1402,7 +1411,7 @@ function peg$parse(input, options) {
       s1 = peg$parseFloat();
       if (s1 !== peg$FAILED) {
         peg$savedPos = s0;
-        s1 = peg$c42(s1);
+        s1 = peg$c40(s1);
       }
       s0 = s1;
       if (s0 === peg$FAILED) {
@@ -1418,7 +1427,7 @@ function peg$parse(input, options) {
     peg$silentFails--;
     if (s0 === peg$FAILED) {
       s1 = peg$FAILED;
-      if (peg$silentFails === 0) { peg$fail(peg$c41); }
+      if (peg$silentFails === 0) { peg$fail(peg$c42); }
     }
 
     return s0;
@@ -1440,7 +1449,7 @@ function peg$parse(input, options) {
       s1 = peg$parseFloat();
       if (s1 !== peg$FAILED) {
         peg$savedPos = s0;
-        s1 = peg$c42(s1);
+        s1 = peg$c40(s1);
       }
       s0 = s1;
       if (s0 === peg$FAILED) {

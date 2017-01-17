@@ -36,5 +36,4 @@ describe('CssParser', () => {
       });
     });
   });
-
 });
