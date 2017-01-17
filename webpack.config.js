@@ -4,7 +4,9 @@ module.exports = {
   entry: './index',
 
   output: {
-    filename: './dist/index.js'
+    filename: './dist/index.js',
+    library: 'CssColorParser',
+    libraryTarget: 'umd'
   },
 
   module: {
