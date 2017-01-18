@@ -46,6 +46,10 @@ declare type CMYK = {
 declare type GRAY = {
   l: number,
   alpha: number
-}
+};
 
-declare type ColorObject = RGBA | HSLA | HWB | LAB | LCH | CMYK | GRAY
+declare type HEX = {
+  hex: string
+};
+
+declare type ColorObject = RGBA | HSLA | HWB | LAB | LCH | CMYK | GRAY | HEX;

@@ -1,3 +1,6 @@
+import compose from 'lodash/fp/compose';
+import curry from 'lodash/fp/curry';
+
 const PRECISION: number = 2;
 
 /**
@@ -35,6 +38,8 @@ export function toSafePercent(p: number): number {
 function convertRGBValue(n: number): number {
   return (n > 1) ? n / 255 : n;
 }
+
+/* --- HSL --- */
 
 // http://www.easyrgb.com/index.php?X=MATH&H=19#text19
 function _hueToRgb(t1: number, t2: number, hue: number): number {
@@ -82,6 +87,8 @@ export function hslToRgba(results: Result): Result {
   const f = c => _hslToRgb('rgba', c);
   return processResults(f, results);
 }
+
+/* --- RGB --- */
 
 /**
  * Converts an RGB color value to HSL. Conversion formula
@@ -134,7 +141,7 @@ function _calcRgbToHsl(r: number, g: number, b: number): Array<number> {
   ];
 }
 
-function _rgbToHsl(func: Function, color: RGBA): HSLA {
+function _rgbToHsl(func: string, color: RGBA): HSLA {
   const {r, g, b, alpha} = color;
   const [h, s, l] = _calcRgbToHsl(r, g, b);
   return {func, h, s, l, alpha};
@@ -156,4 +163,82 @@ export function rgbaToHsl(results: Result): Result {
 
 export function rgbaToHsla(results: Result): Result {
   return rgbaToHsl(results);
+}
+
+function toHex(n: number): string {
+  const x = (n <= 1) ? n : 1;
+  const hex = Math.round(x * 255).toString(16);
+  return (hex === "0") ? "00" : hex;
+}
+
+function checkDoubles(hex: string): boolean {
+  const [a, b] = String(hex);
+  return a === b;
+}
+
+function splitDoubles(hex: string): string {
+  const [a] = hex;
+  return a;
+}
+
+function _rgbToHex(func: string, showAlpha = false, rgb: RGBA): HEX {
+  const {r, g, b, alpha} = rgb;
+  const pairs = (showAlpha) ?
+        [r, g, b, alpha].map(toHex) :
+        [r, g, b].map(toHex);
+
+  const hasDoubles = pairs.map(checkDoubles).every(x => x);
+
+  let hexes;
+  if (hasDoubles) {
+    hexes = pairs.map(splitDoubles);
+  } else {
+    hexes = pairs;
+  }
+
+  const [hr, hg, hb, ha] = hexes;
+
+  return {
+    func,
+    hex: (showAlpha) ? `#${hr}${hg}${hb}${ha}` : `#${hr}${hg}${hb}`
+  };
+}
+
+export function rgbToHex(results: Result): Result {
+  const f = c => _rgbToHex('hex', false, c);
+  return processResults(f, results);
+}
+
+export function rgbaToHex(results: Result): Result {
+  const f = c => _rgbToHex('hex', true, c);
+  return processResults(f, results);
+}
+
+export function hslToHex(results: Result): Result {
+  const fs = compose(curry(_rgbToHex)('hex')(false),
+                     curry(_hslToRgb)('hsl'));
+  const f = c => fs(c);
+  return processResults(f, results);
+}
+
+export function hslaToHex(results: Result): Result {
+  const fs = compose(curry(_rgbToHex)('hex')(true),
+                     curry(_hslToRgb)('hsla'));
+  const f = c => fs(c);
+  return processResults(f, results);
+}
+
+function _toString(opts = {}, color: ColorObject): string {
+  const {func} = color;
+  switch (func) {
+    case 'hex': {
+      const {hex} = color;
+      return hex;
+    }
+  }
+}
+
+export function toString(opts = {}, results: Result): Result {
+  const f = c => _toString(opts, c);
+  return processResults(f, results);
 }
