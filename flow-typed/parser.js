@@ -11,11 +11,6 @@ declare type ErrorLocation = {
   end: ErrorOffset
 };
 
-declare type Parsed = {
-  status: 'done',
-  result: Array<ColorObject>
-};
-
 declare type ParseError = {
   status: 'error',
   message: string,
@@ -23,7 +18,7 @@ declare type ParseError = {
   location: ErrorLocation
 };
 
-declare type Result = Parsed | ParseError;
+declare type Result = ColorObject | ParseError;
 
 declare module "parser" {
   declare module.exports: {

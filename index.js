@@ -5,4 +5,4 @@ import * as Transforms from './src/Transforms';
 export default {
   parse,
   ...Transforms
-}
+};

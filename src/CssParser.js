@@ -1,4 +1,4 @@
-/* @flow */
+// @flow
 
 import Parser from './parser';
 
@@ -18,12 +18,10 @@ export default function parse(cssStr: string): Result {
       };
     };
 
-    const parsed: Array<ColorObject> = Parser.parse(str);
+    let [parsed]: Array<ColorObject> = Parser.parse(str);
+    parsed.format = [];
+    return parsed;
 
-    return {
-      status: 'done',
-      result: parsed
-    };
   } catch (e) {
     const {message, location} = e;
     // message: string, location: ErrorLocation

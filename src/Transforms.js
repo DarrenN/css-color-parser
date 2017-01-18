@@ -1,29 +1,34 @@
-import compose from 'lodash/fp/compose';
-import curry from 'lodash/fp/curry';
+// @flow
+
+import compose from 'ramda/src/compose';
+import curry from 'ramda/src/curry';
+import pipe from 'ramda/src/pipe';
+import props from 'ramda/src/props';
+import uniq from 'ramda/src/uniq';
 
 const PRECISION: number = 2;
+
+/* -- FORMAT TOKENS --*/
+
+export const FORMAT_SHORTHEX = 'shortHex';
+export const FORMAT_INCLUDEALPHA = 'alpha';
+export const FORMAT_INTTOPERCENT = 'intToPercent';
+export const FORMAT_HUETODEGREES = 'hueToDegrees';
 
 /**
  * Take Parsed types and map the transform over result, returning Result
  * Immediately short circuit ParsedError type.
  *
  * @param {Function} func - transform function
- * @param {Result} results
+ * @param {Result} result
  * @return {Result}
  */
-function processResults(func: Function, results: Result): Result {
-  switch (results.status) {
-    case 'error':
-      return result;
-    case 'done': {
-      const {result} = results;
-      const ps = result.map(func);
-      return {
-        status: 'done',
-        result: ps
-      };
-    }
+function guardResult(func: Function, result: Result): Result {
+  if (result && result.status) {
+    return result;
   }
+
+  return func(result);
 }
 
 /**
@@ -53,8 +58,8 @@ function _hueToRgb(t1: number, t2: number, hue: number): number {
 }
 
 // http://www.easyrgb.com/index.php?X=MATH&H=19#text19
-function _hslToRgb(func: string, color: HSLA): RGBA {
-  let {h, s, l, alpha} = color;
+function _hslToRgb(color: HSL): RGB {
+  let {h, s, l, alpha, format} = color;
   let r: number, g: number, b: number, t2: number, t1: number;
 
   if (h > 1) { h = h / 360; }; // convert to percent
@@ -75,18 +80,14 @@ function _hslToRgb(func: string, color: HSLA): RGBA {
     b = toSafePercent(_hueToRgb(t1, t2, h - (1 / 3)));
   }
 
-  return {func, r, g, b, alpha};
+  return {func: 'rgb', r, g, b, alpha, format};
 }
 
 export function hslToRgb(results: Result): Result {
-  const f = c => _hslToRgb('rgb', c);
-  return processResults(f, results);
+  const f = c => _hslToRgb(c);
+  return guardResult(f, results);
 }
 
-export function hslToRgba(results: Result): Result {
-  const f = c => _hslToRgb('rgba', c);
-  return processResults(f, results);
-}
 
 /* --- RGB --- */
 
@@ -105,28 +106,39 @@ export function hslToRgba(results: Result): Result {
  */
 function _calcRgbToHsl(r: number, g: number, b: number): Array<number> {
   // Just in case the r/g/b are somehow in [0, 255]
-  r = convertRGBValue(r);
-  g = convertRGBValue(g);
-  b = convertRGBValue(b);
+  let tr: number = convertRGBValue(r);
+  let tg: number = convertRGBValue(g);
+  let tb: number = convertRGBValue(b);
 
-  var max = Math.max(r, g, b), min = Math.min(r, g, b);
-  var h, s, l = (max + min) / 2;
-  var d = max - min;
+  let max: number = 0;
+  let min: number = 0;
+  let d: number = 0;
+  let h: number = 0;
+  let s: number = 0;
+  let l: number = 0;
+
+  let dr: number;
+  let dg: number;
+  let db: number;
+
+  max = Math.max(tr, tg, tb), min = Math.min(tr, tg, tb);
+  h, s, l = (max + min) / 2;
+  d = max - min;
 
   if (d === 0 || max === min) {
     h = s = 0; // achromatic
   } else {
     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
 
-    let dr = (((max - r) / 6) + (max / 2)) / max;
-    let dg = (((max - g) / 6) + (max / 2)) / max;
-    let db = (((max - b) / 6) + (max / 2)) / max;
+    dr = (((max - tr) / 6) + (max / 2)) / max;
+    dg = (((max - tg) / 6) + (max / 2)) / max;
+    db = (((max - tb) / 6) + (max / 2)) / max;
 
-    if (r === max) {
+    if (tr === max) {
       h = db - dg;
-    } else if (g === max) {
+    } else if (tg === max) {
       h = ( 1 / 3 ) + dr - db;
-    } else if (b === max) {
+    } else if (tb === max) {
       h = ( 2 / 3 ) + dg - dr;
     }
 
@@ -141,28 +153,15 @@ function _calcRgbToHsl(r: number, g: number, b: number): Array<number> {
   ];
 }
 
-function _rgbToHsl(func: string, color: RGBA): HSLA {
-  const {r, g, b, alpha} = color;
+function _rgbToHsl(color: RGB): HSL {
+  const {r, g, b, alpha, format} = color;
   const [h, s, l] = _calcRgbToHsl(r, g, b);
-  return {func, h, s, l, alpha};
+  return {func: 'hsl', h, s, l, alpha, format};
 }
 
 export function rgbToHsl(results: Result): Result {
-  const f = c => _rgbToHsl('hsl', c);
-  return processResults(f, results);
-}
-
-export function rgbToHsla(results: Result): Result {
-  const f = c => _rgbToHsl('hsla', c);
-  return processResults(f, results);
-}
-
-export function rgbaToHsl(results: Result): Result {
-  return rgbaToHsl(results);
-}
-
-export function rgbaToHsla(results: Result): Result {
-  return rgbaToHsl(results);
+  const f = c => _rgbToHsl(c);
+  return guardResult(f, results);
 }
 
 function toHex(n: number): string {
@@ -180,9 +179,10 @@ function splitDoubles(hex: string): string {
   const [a] = hex;
   return a;
 }
-
-function _rgbToHex(func: string, showAlpha = false, rgb: RGBA): HEX {
-  const {r, g, b, alpha} = rgb;
+/*
+function _rgbToHex(rgb: RGB): HEX {
+  const showAlpha = false;
+  const {r, g, b, alpha, format} = rgb;
   const pairs = (showAlpha) ?
         [r, g, b, alpha].map(toHex) :
         [r, g, b].map(toHex);
@@ -199,46 +199,68 @@ function _rgbToHex(func: string, showAlpha = false, rgb: RGBA): HEX {
   const [hr, hg, hb, ha] = hexes;
 
   return {
-    func,
-    hex: (showAlpha) ? `#${hr}${hg}${hb}${ha}` : `#${hr}${hg}${hb}`
+    func: 'hex',
+    hex: (showAlpha) ? `#${hr}${hg}${hb}${ha}` : `#${hr}${hg}${hb}`,
+    r,
+    g,
+    b,
+    alpha,
+    format
+  };
+}
+*/
+
+function _rgbToHex(rgb: RGB): HEX {
+  const {r, g, b, alpha, format} = rgb;
+  const pairs = [r, g, b].map(toHex);
+  const [hr, hg, hb] = pairs;
+
+  return {
+    func: 'hex',
+    hex: `#${hr}${hg}${hb}`,
+    r,
+    g,
+    b,
+    alpha,
+    format
   };
 }
 
 export function rgbToHex(results: Result): Result {
-  const f = c => _rgbToHex('hex', false, c);
-  return processResults(f, results);
-}
-
-export function rgbaToHex(results: Result): Result {
-  const f = c => _rgbToHex('hex', true, c);
-  return processResults(f, results);
+  const f = c => _rgbToHex(c);
+  return guardResult(f, results);
 }
 
 export function hslToHex(results: Result): Result {
-  const fs = compose(curry(_rgbToHex)('hex')(false),
-                     curry(_hslToRgb)('hsl'));
-  const f = c => fs(c);
-  return processResults(f, results);
+  const fs = compose(_rgbToHex, _hslToRgb);
+  return guardResult(fs, results);
 }
 
-export function hslaToHex(results: Result): Result {
-  const fs = compose(curry(_rgbToHex)('hex')(true),
-                     curry(_hslToRgb)('hsla'));
-  const f = c => fs(c);
-  return processResults(f, results);
+
+/* --- FORMATS --- */
+
+
+function addFormat(fmt: string, format: Array<string>): Array<string> {
+  return uniq([...format, fmt]);
 }
 
-function _toString(opts = {}, color: ColorObject): string {
-  const {func} = color;
-  switch (func) {
-    case 'hex': {
-      const {hex} = color;
-      return hex;
-    }
+function formatFactory(fmt: string): Function {
+  return function(result: ColorObject): Result {
+    const {format} = result;
+    result.format = addFormat(fmt, format);
+    return result;
   }
 }
 
-export function toString(opts = {}, results: Result): Result {
-  const f = c => _toString(opts, c);
-  return processResults(f, results);
-}
+export const shortHex: Function = formatFactory(FORMAT_SHORTHEX);
+export const includeAlpha: Function = formatFactory(FORMAT_INCLUDEALPHA);
+export const intToPercent: Function = formatFactory(FORMAT_INTTOPERCENT);
+export const hueToDegrees: Function = formatFactory(FORMAT_HUETODEGREES);
+
+
+/**
+ * Extract keys from Disjoint ColorObject
+ */
+function getValue(func: string, keys: Array<string>, color: ColorObject): Array<any> {
+  return (color.func === func) ? props(keys, color) : [];
+};
