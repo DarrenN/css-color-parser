@@ -77,7 +77,7 @@ describe('Transforms', () => {
           const hex = "#" + [r, g, b, a].map(intToHex).join('');
           const p = parse(hex);
 
-          return(p.func === 'rgba'
+          return(p.func === 'hex'
                  && _.isNumber(p.r) && (p.r === T.toSafePercent(r / 255))
                  && _.isNumber(p.g) && (p.g === T.toSafePercent(g / 255))
                  && _.isNumber(p.b) && (p.b === T.toSafePercent(b / 255))
@@ -94,7 +94,7 @@ describe('Transforms', () => {
           const hex = "#" + [r, g, b].map(intToHex).join('');
           const p = parse(hex);
 
-          return(p.func === 'rgba'
+          return(p.func === 'hex'
                  && _.isNumber(p.r) && (p.r === T.toSafePercent(r / 255))
                  && _.isNumber(p.g) && (p.g === T.toSafePercent(g / 255))
                  && _.isNumber(p.b) && (p.b === T.toSafePercent(b / 255))
@@ -114,7 +114,7 @@ describe('Transforms', () => {
           });
           const p = parse(`#${pr[0]}${pg[0]}${pb[0]}${pa[0]}`);
 
-          return(p.func === 'rgba'
+          return(p.func === 'hex'
                  && _.isNumber(p.r) && (p.r === tr)
                  && _.isNumber(p.g) && (p.g === tg)
                  && _.isNumber(p.b) && (p.b === tb)
@@ -131,7 +131,7 @@ describe('Transforms', () => {
           const [pr, pg, pb] = [r, g, b].map(intToHex);
           const p = parse(`#${pr[0]}${pg[0]}${pb[0]}`);
 
-          return(p.func === 'rgba'
+          return(p.func === 'hex'
                  && _.isNumber(p.r)
                  && _.isNumber(p.g)
                  && _.isNumber(p.b)
@@ -523,4 +523,38 @@ describe('Transforms', () => {
     });
   });
 
+  describe('Strings', () => {
+    describe('RGB', () => {
+      it('#makeString rgb(int int int) -> rgb(int int int)', () => {
+        let property = jsc.forall(rgbIntTriplet, ([r, g, b]) => {
+          const s = `rgb(${r}, ${g}, ${b})`;
+          const p = T.makeString(parse(s));
+          return (p === s);
+        });
+
+        jsc.assert(property);
+      });
+
+      it('#makeString rgba(int int int float) -> rgba(int int int float)', () => {
+        let property = jsc.forall(rgbaPercentQuad, ([r, g, b, a]) => {
+          const s = `rgba(${r}, ${g}, ${b}, ${a / 100})`;
+          const p = T.makeString(parse(s));
+          return (p === s);
+        });
+
+        jsc.assert(property);
+      });
+
+      it('#makeString rgba(int int int percent) -> rgba(int int int float)', () => {
+        let property = jsc.forall(rgbaPercentQuad, ([r, g, b, a]) => {
+          const s = `rgba(${r}, ${g}, ${b}, ${a}%)`;
+          const t = `rgba(${r}, ${g}, ${b}, ${a / 100})`;
+          const p = T.makeString(parse(s));
+          return (p === t);
+        });
+
+        jsc.assert(property);
+      });
+    });
+  });
 });

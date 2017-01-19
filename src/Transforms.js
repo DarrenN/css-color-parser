@@ -1,7 +1,9 @@
 // @flow
 
 import compose from 'ramda/src/compose';
+import contains from 'ramda/src/contains';
 import curry from 'ramda/src/curry';
+import curryN from 'ramda/src/curryN';
 import pipe from 'ramda/src/pipe';
 import props from 'ramda/src/props';
 import uniq from 'ramda/src/uniq';
@@ -14,6 +16,14 @@ export const FORMAT_SHORTHEX = 'shortHex';
 export const FORMAT_INCLUDEALPHA = 'alpha';
 export const FORMAT_INTTOPERCENT = 'intToPercent';
 export const FORMAT_HUETODEGREES = 'hueToDegrees';
+
+function linearTransformFactory(omin: number, omax: number, nmin: number, nmax: number): Function {
+  return (n: number) => {
+    let orange = (omax - omin);
+		let nrange = (nmax - nmin);
+		return Math.round((((n - omin) * nrange) / orange) + nmin);
+  };
+}
 
 /**
  * Take Parsed types and map the transform over result, returning Result
@@ -151,7 +161,7 @@ function _calcRgbToHsl(r: number, g: number, b: number): Array<number> {
     toSafePercent(s),
     toSafePercent(l)
   ];
-}
+};
 
 function _rgbToHsl(color: RGB): HSL {
   const {r, g, b, alpha, format} = color;
@@ -263,4 +273,72 @@ export const hueToDegrees: Function = formatFactory(FORMAT_HUETODEGREES);
  */
 function getValue(func: string, keys: Array<string>, color: ColorObject): Array<any> {
   return (color.func === func) ? props(keys, color) : [];
+};
+
+/* --- STRING --- */
+
+const hasAlpha = contains(FORMAT_INCLUDEALPHA);
+const hasHueToDegress = contains(FORMAT_HUETODEGREES);
+const hasIntToPercent = contains(FORMAT_INTTOPERCENT);
+const hasShortHex = contains(FORMAT_SHORTHEX);
+
+const getRgbVals: Function =
+      curryN(3, getValue)('rgb', ['r', 'g', 'b', 'alpha', 'format']);
+
+function floatToPercent(n: number): string {
+  let x = (n > 1) ? 1 : n;
+  return `${x * 100}%`;
+}
+
+/**
+ * Convert a float [0,1] to an int [0,255]
+ */
+function percentToInt(n: number): number {
+  if (!n) return 0;
+  return linearTransformFactory(0, 1, 0, 255)(n);
+}
+
+/**
+ * RGB/RGBA -> String
+ */
+function makeRgbString(color: ColorObject): string {
+  const keys = ['func', 'r', 'g', 'b', 'alpha', 'format'];
+  let props = [];
+
+  if (color.func === 'rgb') {
+    props = getValue('rgb', keys, color);
+  }
+
+  if (color.func === 'rgba') {
+    props = getValue('rgba', keys, color);
+  }
+
+  const [func, r, g, b, alpha, format] = props;
+  let rgb: Array<any> = [r, g, b];
+
+  if (hasIntToPercent(format)) {
+    rgb = rgb.map(floatToPercent); // [0, 1] -> n%
+  } else {
+    rgb = rgb.map(percentToInt); // [0, 1] -> [0, 255]
+  }
+
+  const [nr, ng, nb] = rgb;
+
+  if (hasAlpha(format) || func === 'rgba') {
+    return `rgba(${nr}, ${ng}, ${nb}, ${alpha})`;
+  }
+
+  return `rgb(${nr}, ${ng}, ${nb})`;
+}
+
+export function makeString(result: ColorObject): string {
+  const {func} = result;
+
+  switch (func) {
+    case 'rgb':
+    case 'rgba':
+      return makeRgbString(result);
+    default:
+      return '#error - could not output string for this color object';
+  }
 };
