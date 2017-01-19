@@ -820,6 +820,46 @@ describe('Transforms', () => {
 
         jsc.assert(property);
       });
+
+      it('#makeString includeAlpha(rgb(int int int)) -> rgba(int int int float)', () => {
+        let property = jsc.forall(rgbIntTriplet, ([r, g, b]) => {
+          const s = `rgb(${r}, ${g}, ${b})`;
+          const t = `rgba(${r}, ${g}, ${b}, 1)`;
+          const p = S.makeString(T.includeAlpha(parse(s)));
+
+          return (p === t);
+        });
+
+        jsc.assert(property);
+      });
+
+      it('#makeString intToPercent(rgb(int int int)) -> rgb(n% n% n%)', () => {
+        const f = (n) => Math.round((n / 255) * 100);
+
+        let property = jsc.forall(rgbIntTriplet, ([r, g, b]) => {
+          const s = `rgb(${r}, ${g}, ${b})`;
+          const t = `rgb(${f(r)}%, ${f(g)}%, ${f(b)}%)`;
+          const p = S.makeString(T.intToPercent(parse(s)));
+
+          return (p === t);
+        });
+
+        jsc.assert(property);
+      });
+
+      it('#makeString includeAlpha(intToPercent(rgb(int int int))) -> rgba(n% n% n% float)', () => {
+        const f = (n) => Math.round((n / 255) * 100);
+
+        let property = jsc.forall(rgbIntTriplet, ([r, g, b]) => {
+          const s = `rgb(${r}, ${g}, ${b})`;
+          const t = `rgba(${f(r)}%, ${f(g)}%, ${f(b)}%, 1)`;
+          const p = S.makeString(T.includeAlpha(T.intToPercent(parse(s))));
+
+          return (p === t);
+        });
+
+        jsc.assert(property);
+      });
     });
   });
 });

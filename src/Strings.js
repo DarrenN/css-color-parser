@@ -41,7 +41,7 @@ const getRgbVals: Function =
 
 function floatToPercent(n: number): string {
   let x = (n > 1) ? 1 : n;
-  return `${x * 100}%`;
+  return `${Math.round(x * 100)}%`;
 }
 
 /**
