@@ -13,7 +13,10 @@ import {
   FORMAT_INCLUDEALPHA,
   FORMAT_INTTOPERCENT,
   FORMAT_SHORTHEX,
-  linearTransformFactory
+  linearTransformFactory,
+  toHex,
+  splitDoubles,
+  checkDoubles
 } from './Transforms';
 
 
@@ -82,10 +85,72 @@ function makeRgbString(color: ColorObject): string {
   return `rgb(${nr}, ${ng}, ${nb})`;
 }
 
+
+/**
+ * HEX -> String
+ */
+function makeHexString(color: ColorObject): string {
+  const keys = ['func', 'hex', 'r', 'g', 'b', 'alpha', 'format'];
+  let props = [];
+
+  if (color.func === 'hex') {
+    props = getValue('hex', keys, color);
+  }
+
+  const [, hex, r, g, b, alpha, format] = props;
+
+  let out = hex; // operate on a copy
+  let pairs = []; // store modified channels
+
+  // No changes to format and 6/8 long then short circuit using
+  // the stored hex string. ALSO, account for the '#'!!
+  if (!format.length && hex.length >= 7) {
+    if (hex.length === 7) {
+      return out;
+    }
+
+    // Lop off alpha hex
+    if (hex.length === 9) {
+      return out.substr(0, 7);
+    }
+  }
+
+  // If we're not shortening and the hex string is short,
+  // then expand it back out (ex: parse(#039f))
+  if (!hasShortHex(format) && hex.length < 7) {
+    if (hasAlpha(format)) {
+      pairs = [r, g, b, alpha].map(toHex);
+      out = "#" + pairs.join('');
+    } else {
+      pairs = [r, g, b].map(toHex);
+      out = "#" + pairs.join('');
+    }
+  }
+
+  // We can only shorten if all pairs are doubles
+  if (hasShortHex(format)) {
+    if (hasAlpha(format)) {
+      pairs = [r, g, b, alpha].map(toHex);
+    } else {
+      pairs = [r, g, b].map(toHex);
+    }
+
+    const hasDoubles = pairs.map(checkDoubles).every(x => x);
+    console.log(pairs, hasDoubles);
+    if (hasDoubles) {
+      out = "#" + pairs.map(splitDoubles).join('');
+    }
+  }
+
+  return out;
+}
+
 function makeString(result: ColorObject): string {
   const {func} = result;
 
   switch (func) {
+    case 'hex':
+      return makeHexString(result);
     case 'rgb':
     case 'rgba':
       return makeRgbString(result);

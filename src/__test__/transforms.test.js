@@ -531,6 +531,56 @@ describe('Transforms', () => {
   });
 
   describe('Strings', () => {
+    describe('HEX', () => {
+      it('#makeString hex(hex8) -> hex6', () => {
+        let property = jsc.forall(rgbIntQuad, ([r, g, b, a]) => {
+          const s = "#" + [r, g, b, a].map(intToHex).join('');
+          const s6 = s.substr(0, 7);
+          const p = S.makeString(parse(s));
+          return (p === s6);
+        });
+
+        jsc.assert(property);
+      });
+
+      it('#makeString hex(hex6) -> hex6', () => {
+        let property = jsc.forall(rgbIntTriplet, ([r, g, b]) => {
+          const s = "#" + [r, g, b].map(intToHex).join('');
+          const p = S.makeString(parse(s));
+          return (p === s);
+        });
+
+        jsc.assert(property);
+      });
+
+      it('#makeString hex(hex4) -> hex6', () => {
+        let property = jsc.forall(rgbIntQuad, ([r, g, b, a]) => {
+          const [hr, hg, hb, ha] = [r, g, b, a].map(intToHex);
+          const s6 = `#${hr[0]}${hr[0]}${hg[0]}${hg[0]}${hb[0]}${hb[0]}`;
+          const s4 = `#${hr[0]}${hg[0]}${hb[0]}${ha[0]}`;
+          const p = S.makeString(parse(s4));
+
+          return (p === s6.toLowerCase());
+        });
+
+        jsc.assert(property);
+      });
+
+      it('#makeString hex(hex3) -> hex6', () => {
+        let property = jsc.forall(rgbIntTriplet, ([r, g, b]) => {
+          const [hr, hg, hb] = [r, g, b].map(intToHex);
+          const s6 = `#${hr[0]}${hr[0]}${hg[0]}${hg[0]}${hb[0]}${hb[0]}`;
+          const s3 = `#${hr[0]}${hg[0]}${hb[0]}`;
+          const p = S.makeString(parse(s3));
+
+          return (p === s6.toLowerCase());
+        });
+
+        jsc.assert(property);
+      });
+
+    });
+
     describe('RGB', () => {
       it('#makeString rgb(int int int) -> rgb(int int int)', () => {
         let property = jsc.forall(rgbIntTriplet, ([r, g, b]) => {
