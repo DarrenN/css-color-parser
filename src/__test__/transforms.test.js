@@ -603,6 +603,33 @@ describe('Transforms', () => {
         jsc.assert(property);
       });
 
+      it('#makeString shortHex(hex(hex6)) -> hex3/6', () => {
+        let property = jsc.forall(rgbIntTriplet, ([r, g, b]) => {
+          let ps3, ps6;
+          const pairs = [r, g, b].map(intToHex);
+
+          const s = "#" + pairs.join('');
+
+          const ms = pairs.map(x => {
+            return `${x[0]}${x[0]}`;
+          });
+
+          const [mr, mg, mb] = ms;
+          ps6 = "#" + ms.join('');
+          ps3 = `#${mr[0]}${mg[0]}${mb[0]}`;
+
+          const p1 = S.makeString(T.shortHex(parse(s)));
+          const p2 = S.makeString(T.shortHex(parse(ps6)));
+
+          return (p1 === s);
+          return (p2 === ps3);
+
+          return true;
+        });
+
+        jsc.assert(property);
+      });
+
       it('#makeString includeAlpha(hex(hex8)) -> hex8', () => {
         let property = jsc.forall(rgbIntQuad, ([r, g, b, a]) => {
           const s = "#" + [r, g, b, a].map(intToHex).join('');
@@ -655,6 +682,107 @@ describe('Transforms', () => {
           const p = S.makeString(T.includeAlpha(parse(s3)));
 
           return (p.toLowerCase() === s8.toLowerCase());
+        });
+
+        jsc.assert(property);
+      });
+
+      it('#makeString includeAlpha(shortHex(hex(hex8))) -> hex4/8', () => {
+        let property = jsc.forall(rgbIntQuad, ([r, g, b, a]) => {
+          let ps4, ps8;
+
+          let pairs = [r, g, b, a].map(intToHex);
+
+          // Ensure we don't get a random set of pairs
+          if (pairs.map(T.checkDoubles).every(x => x)) {
+            pairs[0] = 'a3';
+          }
+
+          const s = "#" + pairs.join('');
+
+          const ms = pairs.map(x => {
+            return `${x[0]}${x[0]}`;
+          });
+
+          const [mr, mg, mb, ma] = ms;
+          ps8 = "#" + ms.join('');
+          ps4 = `#${mr[0]}${mg[0]}${mb[0]}${ma[0]}`;
+
+          const p1 = S.makeString(T.includeAlpha(T.shortHex(parse(s)))); // not pairs
+          const p2 = S.makeString(T.includeAlpha(T.shortHex(parse(ps8)))); // pairs
+
+          return (p1 === s);
+          return (p2 === ps4);
+
+          return true;
+        });
+
+        jsc.assert(property);
+      });
+
+      it('#makeString includeAlpha(shortHex(hex(hex6))) -> hex4/8', () => {
+        let property = jsc.forall(rgbIntTriplet, ([r, g, b]) => {
+          let ps4, ps8, s8;
+
+          let pairs = [r, g, b].map(intToHex);
+
+          // Ensure we don't get a random set of pairs
+          if (pairs.map(T.checkDoubles).every(x => x)) {
+            pairs[0] = 'a3';
+          }
+
+          const s = "#" + pairs.join(''); // 6 digit hex
+          s8 = s + 'ff';
+
+          const ms = pairs.map(x => {
+            return `${x[0]}${x[0]}`;
+          });
+
+          const [mr, mg, mb] = ms;
+          ps8 = "#" + ms.join('') + 'ff';
+          ps4 = `#${mr[0]}${mg[0]}${mb[0]}f`;
+
+          const p1 = S.makeString(T.includeAlpha(T.shortHex(parse(s)))); // not pairs
+          const p2 = S.makeString(T.includeAlpha(T.shortHex(parse(ps8)))); // pairs
+
+          return (p1 === s8);
+          return (p2 === ps4);
+
+          return true;
+        });
+
+        jsc.assert(property);
+      });
+
+      it('#makeString - format order does not matter', () => {
+        let property = jsc.forall(rgbIntTriplet, ([r, g, b]) => {
+          let ps4, ps8, s8;
+
+          let pairs = [r, g, b].map(intToHex);
+
+          // Ensure we don't get a random set of pairs
+          if (pairs.map(T.checkDoubles).every(x => x)) {
+            pairs[0] = 'a3';
+          }
+
+          const s = "#" + pairs.join(''); // 6 digit hex
+          s8 = s + 'ff';
+
+          const ms = pairs.map(x => {
+            return `${x[0]}${x[0]}`;
+          });
+
+          const [mr, mg, mb] = ms;
+          ps8 = "#" + ms.join('') + 'ff';
+          ps4 = `#${mr[0]}${mg[0]}${mb[0]}f`;
+
+          const p1 = S.makeString(T.shortHex(T.includeAlpha(parse(s)))); // not pairs
+          const p2 = S.makeString(T.includeAlpha(T.shortHex(parse(ps8)))); // pairs
+
+          return (p1 === s8);
+          return (p2 === ps4);
+
+          return true;
         });
 
         jsc.assert(property);
