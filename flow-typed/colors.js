@@ -65,6 +65,7 @@ declare type GRAY = {
 declare type HEX = {
   func: 'hex',
   format: Array<string>,
+  hex: string,
   r: number,
   g: number,
   b: number,

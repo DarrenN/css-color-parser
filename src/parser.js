@@ -254,7 +254,7 @@ function peg$parse(input, options) {
 
         	return {
           	func,
-            hex: hexds,
+            hex: text(),
             r: hexToPercent(red),
             g: hexToPercent(green),
             b: hexToPercent(blue),

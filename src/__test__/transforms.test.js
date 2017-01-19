@@ -84,6 +84,7 @@ describe('Transforms', () => {
                  && _.isNumber(p.b) && (p.b === T.toSafePercent(b / 255))
                  && _.isNumber(p.alpha)
                  && p.alpha === hexAlpha(intToHex(a))
+                 && p.hex === hex
                 );
         });
 
@@ -101,6 +102,7 @@ describe('Transforms', () => {
                  && _.isNumber(p.b) && (p.b === T.toSafePercent(b / 255))
                  && _.isNumber(p.alpha)
                  && p.alpha === 1
+                 && p.hex === hex
                 );
         });
 
@@ -113,7 +115,8 @@ describe('Transforms', () => {
           const [tr, tg, tb, ta] = [pr[0], pg[0], pb[0], pa[0]].map(n => {
             return T.toSafePercent(parseInt(`${n}${n}`, 16) / 255);
           });
-          const p = parse(`#${pr[0]}${pg[0]}${pb[0]}${pa[0]}`);
+          const hex = `#${pr[0]}${pg[0]}${pb[0]}${pa[0]}`;
+          const p = parse(hex);
 
           return(p.func === 'hex'
                  && _.isNumber(p.r) && (p.r === tr)
@@ -121,6 +124,7 @@ describe('Transforms', () => {
                  && _.isNumber(p.b) && (p.b === tb)
                  && _.isNumber(p.alpha)
                  && p.alpha === ta
+                 && p.hex === hex
                 );
         });
 
@@ -130,7 +134,8 @@ describe('Transforms', () => {
       it('parses 3 digit hex codes into RGBA', () => {
         let property = jsc.forall(rgbIntTriplet, ([r, g, b]) => {
           const [pr, pg, pb] = [r, g, b].map(intToHex);
-          const p = parse(`#${pr[0]}${pg[0]}${pb[0]}`);
+          const hex = `#${pr[0]}${pg[0]}${pb[0]}`;
+          const p = parse(hex);
 
           return(p.func === 'hex'
                  && _.isNumber(p.r)
@@ -138,6 +143,7 @@ describe('Transforms', () => {
                  && _.isNumber(p.b)
                  && _.isNumber(p.alpha)
                  && p.alpha === 1
+                 && p.hex === hex
                 );
         });
 
