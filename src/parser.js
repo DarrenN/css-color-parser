@@ -1711,7 +1711,7 @@ function peg$parse(input, options) {
       let nmin = 0;
       let orange = (omax - omin);
   		let nrange = (nmax - nmin);
-  		return safePercent(((((a - omin) * nrange) / orange) + nmin) / 100);
+  		return ((((a - omin) * nrange) / orange) + nmin) / 100;
     }
 
     function percentToNumber(n) {
@@ -1740,7 +1740,7 @@ function peg$parse(input, options) {
 
     function constrainL(l) { return (l > 100) ? 100 : l; }
     function safePercent(n) { return parseFloat(n.toFixed(PRECISION)); }
-    function hexToPercent(n) { return safePercent(parseInt(n, 16) / 255); }
+    function hexToPercent(n) { return parseInt(n, 16) / 255; }
     function hueToPercent(n) { return safePercent(n / 360); }
 
 

@@ -66,7 +66,7 @@ function hexAlpha(alpha) {
   let nmin = 0;
   let orange = (omax - omin);
 	let nrange = (nmax - nmin);
-	return T.toSafePercent(((((a - omin) * nrange) / orange) + nmin) / 100);
+	return ((((a - omin) * nrange) / orange) + nmin) / 100;
 }
 
 describe('Transforms', () => {
@@ -79,9 +79,9 @@ describe('Transforms', () => {
           const p = parse(hex);
 
           return(p.func === 'hex'
-                 && _.isNumber(p.r) && (p.r === T.toSafePercent(r / 255))
-                 && _.isNumber(p.g) && (p.g === T.toSafePercent(g / 255))
-                 && _.isNumber(p.b) && (p.b === T.toSafePercent(b / 255))
+                 && _.isNumber(p.r) && (p.r === r / 255)
+                 && _.isNumber(p.g) && (p.g === g / 255)
+                 && _.isNumber(p.b) && (p.b === b / 255)
                  && _.isNumber(p.alpha)
                  && p.alpha === hexAlpha(intToHex(a))
                  && p.hex === hex
@@ -97,9 +97,9 @@ describe('Transforms', () => {
           const p = parse(hex);
 
           return(p.func === 'hex'
-                 && _.isNumber(p.r) && (p.r === T.toSafePercent(r / 255))
-                 && _.isNumber(p.g) && (p.g === T.toSafePercent(g / 255))
-                 && _.isNumber(p.b) && (p.b === T.toSafePercent(b / 255))
+                 && _.isNumber(p.r) && (p.r === r / 255)
+                 && _.isNumber(p.g) && (p.g === g / 255)
+                 && _.isNumber(p.b) && (p.b === b / 255)
                  && _.isNumber(p.alpha)
                  && p.alpha === 1
                  && p.hex === hex
@@ -113,7 +113,7 @@ describe('Transforms', () => {
         let property = jsc.forall(rgbIntQuad, ([r, g, b, a]) => {
           const [pr, pg, pb, pa] = [r, g, b, a].map(intToHex);
           const [tr, tg, tb, ta] = [pr[0], pg[0], pb[0], pa[0]].map(n => {
-            return T.toSafePercent(parseInt(`${n}${n}`, 16) / 255);
+            return parseInt(`${n}${n}`, 16) / 255;
           });
           const hex = `#${pr[0]}${pg[0]}${pb[0]}${pa[0]}`;
           const p = parse(hex);
@@ -123,7 +123,7 @@ describe('Transforms', () => {
                  && _.isNumber(p.g) && (p.g === tg)
                  && _.isNumber(p.b) && (p.b === tb)
                  && _.isNumber(p.alpha)
-                 && p.alpha === ta
+                 && T.toSafePercent(p.alpha) === T.toSafePercent(ta)
                  && p.hex === hex
                 );
         });

@@ -174,10 +174,27 @@ function rgbToHsl(results: Result): Result {
   return guardResult(f, results);
 }
 
+/**
+ * Convert [0, 1] to Hex pair
+ *
+ * Important: we don't use Math.round because that messes up
+ * finer tuned numbers like 0.67 - if we rounded that is
+ * converted to 'ab' when it should be 'aa'
+ *
+ * @param {Number} n [0, 1]
+ * @return {String}
+ */
 function toHex(n: number): string {
   const x = (n <= 1) ? n : 1;
-  const hex = Math.round(x * 255).toString(16);
-  return (hex === "0") ? "00" : hex;
+  const hex = (x * 255).toString(16);
+  let out = "";
+  if (hex === "0") {
+    out = "00";
+  } else {
+    out = hex[0] + hex[1];
+  }
+
+  return out;
 }
 
 function checkDoubles(hex: string): boolean {
@@ -281,5 +298,8 @@ export {
   rgbToHex,
   rgbToHsl,
   shortHex,
-  toSafePercent
+  toHex,
+  toSafePercent,
+  checkDoubles,
+  splitDoubles
 };
