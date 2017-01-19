@@ -12,10 +12,10 @@ const PRECISION: number = 2;
 
 /* -- FORMAT TOKENS --*/
 
-export const FORMAT_SHORTHEX = 'shortHex';
-export const FORMAT_INCLUDEALPHA = 'alpha';
-export const FORMAT_INTTOPERCENT = 'intToPercent';
-export const FORMAT_HUETODEGREES = 'hueToDegrees';
+const FORMAT_HUETODEGREES = 'hueToDegrees';
+const FORMAT_INCLUDEALPHA = 'alpha';
+const FORMAT_INTTOPERCENT = 'intToPercent';
+const FORMAT_SHORTHEX = 'shortHex';
 
 function linearTransformFactory(omin: number, omax: number, nmin: number, nmax: number): Function {
   return (n: number) => {
@@ -46,7 +46,7 @@ function guardResult(func: Function, result: Result): Result {
  * @param {Number} p
  * @return {Number}
  */
-export function toSafePercent(p: number): number {
+function toSafePercent(p: number): number {
   return Number(p.toFixed(PRECISION));
 }
 
@@ -93,7 +93,7 @@ function _hslToRgb(color: HSL): RGB {
   return {func: 'rgb', r, g, b, alpha, format};
 }
 
-export function hslToRgb(results: Result): Result {
+function hslToRgb(results: Result): Result {
   const f = c => _hslToRgb(c);
   return guardResult(f, results);
 }
@@ -169,7 +169,7 @@ function _rgbToHsl(color: RGB): HSL {
   return {func: 'hsl', h, s, l, alpha, format};
 }
 
-export function rgbToHsl(results: Result): Result {
+function rgbToHsl(results: Result): Result {
   const f = c => _rgbToHsl(c);
   return guardResult(f, results);
 }
@@ -190,34 +190,34 @@ function splitDoubles(hex: string): string {
   return a;
 }
 /*
-function _rgbToHex(rgb: RGB): HEX {
+  function _rgbToHex(rgb: RGB): HEX {
   const showAlpha = false;
   const {r, g, b, alpha, format} = rgb;
   const pairs = (showAlpha) ?
-        [r, g, b, alpha].map(toHex) :
-        [r, g, b].map(toHex);
+  [r, g, b, alpha].map(toHex) :
+  [r, g, b].map(toHex);
 
   const hasDoubles = pairs.map(checkDoubles).every(x => x);
 
   let hexes;
   if (hasDoubles) {
-    hexes = pairs.map(splitDoubles);
+  hexes = pairs.map(splitDoubles);
   } else {
-    hexes = pairs;
+  hexes = pairs;
   }
 
   const [hr, hg, hb, ha] = hexes;
 
   return {
-    func: 'hex',
-    hex: (showAlpha) ? `#${hr}${hg}${hb}${ha}` : `#${hr}${hg}${hb}`,
-    r,
-    g,
-    b,
-    alpha,
-    format
+  func: 'hex',
+  hex: (showAlpha) ? `#${hr}${hg}${hb}${ha}` : `#${hr}${hg}${hb}`,
+  r,
+  g,
+  b,
+  alpha,
+  format
   };
-}
+  }
 */
 
 function _rgbToHex(rgb: RGB): HEX {
@@ -236,12 +236,12 @@ function _rgbToHex(rgb: RGB): HEX {
   };
 }
 
-export function rgbToHex(results: Result): Result {
+function rgbToHex(results: Result): Result {
   const f = c => _rgbToHex(c);
   return guardResult(f, results);
 }
 
-export function hslToHex(results: Result): Result {
+function hslToHex(results: Result): Result {
   const fs = compose(_rgbToHex, _hslToRgb);
   return guardResult(fs, results);
 }
@@ -262,83 +262,24 @@ function formatFactory(fmt: string): Function {
   }
 }
 
-export const shortHex: Function = formatFactory(FORMAT_SHORTHEX);
-export const includeAlpha: Function = formatFactory(FORMAT_INCLUDEALPHA);
-export const intToPercent: Function = formatFactory(FORMAT_INTTOPERCENT);
-export const hueToDegrees: Function = formatFactory(FORMAT_HUETODEGREES);
+const shortHex: Function = formatFactory(FORMAT_SHORTHEX);
+const includeAlpha: Function = formatFactory(FORMAT_INCLUDEALPHA);
+const intToPercent: Function = formatFactory(FORMAT_INTTOPERCENT);
+const hueToDegrees: Function = formatFactory(FORMAT_HUETODEGREES);
 
-
-/**
- * Extract keys from Disjoint ColorObject
- */
-function getValue(func: string, keys: Array<string>, color: ColorObject): Array<any> {
-  return (color.func === func) ? props(keys, color) : [];
-};
-
-/* --- STRING --- */
-
-const hasAlpha = contains(FORMAT_INCLUDEALPHA);
-const hasHueToDegress = contains(FORMAT_HUETODEGREES);
-const hasIntToPercent = contains(FORMAT_INTTOPERCENT);
-const hasShortHex = contains(FORMAT_SHORTHEX);
-
-const getRgbVals: Function =
-      curryN(3, getValue)('rgb', ['r', 'g', 'b', 'alpha', 'format']);
-
-function floatToPercent(n: number): string {
-  let x = (n > 1) ? 1 : n;
-  return `${x * 100}%`;
-}
-
-/**
- * Convert a float [0,1] to an int [0,255]
- */
-function percentToInt(n: number): number {
-  if (!n) return 0;
-  return linearTransformFactory(0, 1, 0, 255)(n);
-}
-
-/**
- * RGB/RGBA -> String
- */
-function makeRgbString(color: ColorObject): string {
-  const keys = ['func', 'r', 'g', 'b', 'alpha', 'format'];
-  let props = [];
-
-  if (color.func === 'rgb') {
-    props = getValue('rgb', keys, color);
-  }
-
-  if (color.func === 'rgba') {
-    props = getValue('rgba', keys, color);
-  }
-
-  const [func, r, g, b, alpha, format] = props;
-  let rgb: Array<any> = [r, g, b];
-
-  if (hasIntToPercent(format)) {
-    rgb = rgb.map(floatToPercent); // [0, 1] -> n%
-  } else {
-    rgb = rgb.map(percentToInt); // [0, 1] -> [0, 255]
-  }
-
-  const [nr, ng, nb] = rgb;
-
-  if (hasAlpha(format) || func === 'rgba') {
-    return `rgba(${nr}, ${ng}, ${nb}, ${alpha})`;
-  }
-
-  return `rgb(${nr}, ${ng}, ${nb})`;
-}
-
-export function makeString(result: ColorObject): string {
-  const {func} = result;
-
-  switch (func) {
-    case 'rgb':
-    case 'rgba':
-      return makeRgbString(result);
-    default:
-      return '#error - could not output string for this color object';
-  }
+export {
+  FORMAT_HUETODEGREES,
+  FORMAT_INCLUDEALPHA,
+  FORMAT_INTTOPERCENT,
+  FORMAT_SHORTHEX,
+  hslToHex,
+  hslToRgb,
+  hueToDegrees,
+  includeAlpha,
+  intToPercent,
+  linearTransformFactory,
+  rgbToHex,
+  rgbToHsl,
+  shortHex,
+  toSafePercent
 };

@@ -1,10 +1,11 @@
 /*global describe, it, beforeEach, afterEach */
 
-import expect from 'expect';
-import parse from '../CssParser';
+import * as S from '../Strings';
 import * as T from '../Transforms';
-import jsc from 'jsverify';
 import * as _ from 'lodash/fp';
+import expect from 'expect';
+import jsc from 'jsverify';
+import parse from '../CssParser';
 
 function intToHex(n) {
   n = parseInt(n,10);
@@ -528,7 +529,7 @@ describe('Transforms', () => {
       it('#makeString rgb(int int int) -> rgb(int int int)', () => {
         let property = jsc.forall(rgbIntTriplet, ([r, g, b]) => {
           const s = `rgb(${r}, ${g}, ${b})`;
-          const p = T.makeString(parse(s));
+          const p = S.makeString(parse(s));
           return (p === s);
         });
 
@@ -538,7 +539,7 @@ describe('Transforms', () => {
       it('#makeString rgba(int int int float) -> rgba(int int int float)', () => {
         let property = jsc.forall(rgbaPercentQuad, ([r, g, b, a]) => {
           const s = `rgba(${r}, ${g}, ${b}, ${a / 100})`;
-          const p = T.makeString(parse(s));
+          const p = S.makeString(parse(s));
           return (p === s);
         });
 
@@ -549,7 +550,7 @@ describe('Transforms', () => {
         let property = jsc.forall(rgbaPercentQuad, ([r, g, b, a]) => {
           const s = `rgba(${r}, ${g}, ${b}, ${a}%)`;
           const t = `rgba(${r}, ${g}, ${b}, ${a / 100})`;
-          const p = T.makeString(parse(s));
+          const p = S.makeString(parse(s));
           return (p === t);
         });
 
