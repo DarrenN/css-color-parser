@@ -211,41 +211,41 @@ function peg$parse(input, options) {
         },
       peg$c26 = "#",
       peg$c27 = peg$literalExpectation("#", false),
-      peg$c28 = function(hex) {
-        	var func = 'rgba';
-        	var red, green, blue, alpha;
+      peg$c28 = function(hexds) {
+        	var func = 'hex';
+        	var red, green, blue, alpha, hex;
 
-          if (hex.length < 3 ||
-          	  hex.length === 5 ||
-              hex.length === 7 ||
-              hex.length > 8) {
+          if (hexds.length < 3 ||
+          	  hexds.length === 5 ||
+              hexds.length === 7 ||
+              hexds.length > 8) {
           	return undefined;
           }
 
-      	  if (hex.length == 3) {
-          	let [r, g, b] = hex;
+      	  if (hexds.length == 3) {
+          	let [r, g, b] = hexds;
           	red = "" + r + r;
             green = "" + g + g;
             blue = "" + b + b;
           }
 
-          if (hex.length == 4) {
-          	let [r, g, b, a] = hex;
+          if (hexds.length == 4) {
+          	let [r, g, b, a] = hexds;
           	red = "" + r + r;
             green = "" + g + g;
             blue = "" + b + b;
             alpha = "" + a + a;
           }
 
-         	if (hex.length == 6) {
-          	let [r1, r2, g1, g2, b1, b2] = hex;
+         	if (hexds.length == 6) {
+          	let [r1, r2, g1, g2, b1, b2] = hexds;
           	red = "" + r1 + r2;
             green = "" + g1 + g2;
             blue = "" + b1 + b2;
           }
 
-          if (hex.length == 8) {
-          	let [r1, r2, g1, g2, b1, b2, a1, a2] = hex;
+          if (hexds.length == 8) {
+          	let [r1, r2, g1, g2, b1, b2, a1, a2] = hexds;
           	red = "" + r1 + r2;
             green = "" + g1 + g2;
             blue = "" + b1 + b2;
@@ -254,6 +254,7 @@ function peg$parse(input, options) {
 
         	return {
           	func,
+            hex: hexds,
             r: hexToPercent(red),
             g: hexToPercent(green),
             b: hexToPercent(blue),
@@ -282,7 +283,7 @@ function peg$parse(input, options) {
       peg$c37 = function(deg) { return deg },
       peg$c38 = peg$otherExpectation("rgbint"),
       peg$c39 = function(percent) { return safePercent(percent); },
-      peg$c40 = function(int) { return (int > 255) ? 1 : safePercent(int / 255) },
+      peg$c40 = function(int) { return (int > 255) ? 1 : int / 255 },
       peg$c41 = peg$otherExpectation("cmyk-component"),
       peg$c42 = function(float) { return (float > 1) ? 1 : float; },
       peg$c43 = function(int) { return (int > 1) ? 1 : int; },
