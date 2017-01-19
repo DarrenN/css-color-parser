@@ -4,6 +4,8 @@
   "description": "Parse CSS Level 4 Color function strings",
   "main": "index.js",
   "scripts": {
+    "build:dev": "./node_modules/.bin/webpack -d",
+    "build:parser": "./node_modules/.bin/pegjs -o src/parser.js src/grammar.peg",
     "test": "karma start karma.conf.js",
     "test:single": "karma start karma.conf.js --single"
   },
