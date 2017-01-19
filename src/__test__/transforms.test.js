@@ -11,8 +11,10 @@ function intToHex(n) {
   n = parseInt(n,10);
   if (isNaN(n)) return "00";
   n = Math.max(0,Math.min(n,255));
-  return "0123456789ABCDEF".charAt((n - n % 16) / 16)
+  const o = "0123456789ABCDEF".charAt((n - n % 16) / 16)
     + "0123456789ABCDEF".charAt(n % 16);
+
+  return o.toLowerCase();
 }
 
 const fixedArray = (gen, len) => {
@@ -60,13 +62,7 @@ const reHex8 = /#[0-9a-fA-F]{8}/;
 function hexAlpha(alpha) {
   if (!alpha) return 1;
   let a = parseInt(alpha, 16);
-  let omax = 255;
-  let omin = 0;
-  let nmax = 100;
-  let nmin = 0;
-  let orange = (omax - omin);
-	let nrange = (nmax - nmin);
-	return ((((a - omin) * nrange) / orange) + nmin) / 100;
+  return a / 255;
 }
 
 describe('Transforms', () => {
@@ -579,6 +575,90 @@ describe('Transforms', () => {
         jsc.assert(property);
       });
 
+      it('#makeString shortHex(hex(hex8)) -> hex3/6', () => {
+        let property = jsc.forall(rgbIntQuad, ([r, g, b, a]) => {
+          let ps8, ps3, s6;
+          const pairs = [r, g, b, a].map(intToHex);
+
+          const s = "#" + pairs.join('');
+          s6 = s.substr(0, 7);
+
+          const ms = pairs.map(x => {
+            return `${x[0]}${x[0]}`;
+          });
+
+          const [mr, mg, mb] = ms;
+          ps8 = "#" + ms.join('');
+          ps3 = `#${mr[0]}${mg[0]}${mb[0]}`;
+
+          const p1 = S.makeString(T.shortHex(parse(s)));
+          const p2 = S.makeString(T.shortHex(parse(ps8)));
+
+          return (p1 === s6);
+          return (p2 === ps3);
+
+          return true;
+        });
+
+        jsc.assert(property);
+      });
+
+      it('#makeString includeAlpha(hex(hex8)) -> hex8', () => {
+        let property = jsc.forall(rgbIntQuad, ([r, g, b, a]) => {
+          const s = "#" + [r, g, b, a].map(intToHex).join('');
+          const p = S.makeString(T.includeAlpha(parse(s)));
+
+          return (p === s);
+        });
+
+        jsc.assert(property);
+      });
+
+      it('#makeString includeAlpha(hex(hex6)) -> hex8', () => {
+        let property = jsc.forall(rgbIntTriplet, ([r, g, b]) => {
+          const s = "#" + [r, g, b].map(intToHex).join('');
+          const s8 = s + 'ff';
+          const p = S.makeString(T.includeAlpha(parse(s)));
+
+          return (p.toLowerCase() === s8.toLowerCase());
+        });
+
+        jsc.assert(property);
+      });
+
+      it('#makeString includeAlpha(hex(hex4)) -> hex8', () => {
+        let property = jsc.forall(rgbIntQuad, ([r, g, b, a]) => {
+          const [hr, hg, hb, ha] = [r, g, b, a].map(x => {
+            const h = intToHex(x);
+            return `${h[0]}${h[0]}`;
+          });
+
+          const s8 = `#${hr}${hg}${hb}${ha}`;
+          const s4 = `#${hr[0]}${hg[0]}${hb[0]}${ha[0]}`;
+          const p = S.makeString(T.includeAlpha(parse(s4)));
+
+          return (p.toLowerCase() === s8.toLowerCase());
+        });
+
+        jsc.assert(property);
+      });
+
+      it('#makeString includeAlpha(hex(hex3)) -> hex8', () => {
+        let property = jsc.forall(rgbIntTriplet, ([r, g, b]) => {
+          const [hr, hg, hb] = [r, g, b].map(x => {
+            const h = intToHex(x);
+            return `${h[0]}${h[0]}`;
+          });
+
+          const s8 = `#${hr}${hg}${hb}ff`;
+          const s3 = `#${hr[0]}${hg[0]}${hb[0]}`;
+          const p = S.makeString(T.includeAlpha(parse(s3)));
+
+          return (p.toLowerCase() === s8.toLowerCase());
+        });
+
+        jsc.assert(property);
+      });
     });
 
     describe('RGB', () => {

@@ -1705,6 +1705,8 @@ function peg$parse(input, options) {
     function hexAlpha(alpha) {
       if (!alpha) return 1;
       let a = parseInt(alpha, 16);
+      return a / 255;
+      /*
       let omax = 255;
       let omin = 0;
       let nmax = 100;
@@ -1712,6 +1714,7 @@ function peg$parse(input, options) {
       let orange = (omax - omin);
   		let nrange = (nmax - nmin);
   		return ((((a - omin) * nrange) / orange) + nmin) / 100;
+      */
     }
 
     function percentToNumber(n) {

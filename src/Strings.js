@@ -117,7 +117,7 @@ function makeHexString(color: ColorObject): string {
 
   // If we're not shortening and the hex string is short,
   // then expand it back out (ex: parse(#039f))
-  if (!hasShortHex(format) && hex.length < 7) {
+  if (!hasShortHex(format) && hex.length <= 7) {
     if (hasAlpha(format)) {
       pairs = [r, g, b, alpha].map(toHex);
       out = "#" + pairs.join('');
@@ -136,9 +136,11 @@ function makeHexString(color: ColorObject): string {
     }
 
     const hasDoubles = pairs.map(checkDoubles).every(x => x);
-    console.log(pairs, hasDoubles);
+
     if (hasDoubles) {
       out = "#" + pairs.map(splitDoubles).join('');
+    } else {
+      out = "#" + pairs.join(''); // no alpha and no doubles so just 6
     }
   }
 

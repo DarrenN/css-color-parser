@@ -2,6 +2,7 @@ var FlowBabelWebpackPlugin = require('flow-babel-webpack-plugin');
 
 module.exports = {
   entry: './index',
+  devtool: 'source-map',
 
   output: {
     filename: './dist/index.js',

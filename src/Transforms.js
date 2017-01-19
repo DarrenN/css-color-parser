@@ -177,65 +177,34 @@ function rgbToHsl(results: Result): Result {
 /**
  * Convert [0, 1] to Hex pair
  *
- * Important: we don't use Math.round because that messes up
- * finer tuned numbers like 0.67 - if we rounded that is
- * converted to 'ab' when it should be 'aa'
- *
  * @param {Number} n [0, 1]
  * @return {String}
  */
-function toHex(n: number): string {
-  const x = (n <= 1) ? n : 1;
-  const hex = (x * 255).toString(16);
+function toHex(x: number): string {
   let out = "";
-  if (hex === "0") {
-    out = "00";
-  } else {
-    out = hex[0] + hex[1];
-  }
+  let n = (x <= 1) ? x : 1; // constrain to [0, 1]
+  n = n * 255; // convert to [0, 255]
 
-  return out;
+  n = parseInt(n,10);
+  if (isNaN(n)) return "00";
+
+  n = Math.max(0, Math.min(n,255));
+
+  out = "0123456789ABCDEF".charAt((n - n % 16) / 16)
+    + "0123456789ABCDEF".charAt(n % 16);
+
+  return out.toLocaleLowerCase();
 }
 
 function checkDoubles(hex: string): boolean {
-  const [a, b] = String(hex);
-  return a === b;
+  const h = String(hex);
+  return h[0] === h[1];
 }
 
 function splitDoubles(hex: string): string {
-  const [a] = hex;
-  return a;
+  const h = String(hex);
+  return h[0];
 }
-/*
-  function _rgbToHex(rgb: RGB): HEX {
-  const showAlpha = false;
-  const {r, g, b, alpha, format} = rgb;
-  const pairs = (showAlpha) ?
-  [r, g, b, alpha].map(toHex) :
-  [r, g, b].map(toHex);
-
-  const hasDoubles = pairs.map(checkDoubles).every(x => x);
-
-  let hexes;
-  if (hasDoubles) {
-  hexes = pairs.map(splitDoubles);
-  } else {
-  hexes = pairs;
-  }
-
-  const [hr, hg, hb, ha] = hexes;
-
-  return {
-  func: 'hex',
-  hex: (showAlpha) ? `#${hr}${hg}${hb}${ha}` : `#${hr}${hg}${hb}`,
-  r,
-  g,
-  b,
-  alpha,
-  format
-  };
-  }
-*/
 
 function _rgbToHex(rgb: RGB): HEX {
   const {r, g, b, alpha, format} = rgb;
@@ -268,8 +237,8 @@ function hslToHex(results: Result): Result {
 
 
 function addFormat(fmt: string, format: Array<string>): Array<string> {
-  return uniq([...format, fmt]);
-}
+  return (Array.isArray(format)) ? uniq([...format, fmt]) : format;
+};
 
 function formatFactory(fmt: string): Function {
   return function(result: ColorObject): Result {
