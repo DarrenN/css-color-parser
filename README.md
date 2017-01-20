@@ -2,11 +2,13 @@
 
 Parse CSS Level 4 Color Strings
 
-* :warning: - Super Beta, you have been warned *
+:warning: **Super Beta, you have been warned **
+
+Uses a PEG grammar to parse CSS Level 4 color functions into a data structure that can be easily manipulated. Will also render out strings in a CSS color function format (see below).
 
 To get running:
 
-```
+```bash
 $ npm install
 $ npm run build:parser
 $ npm run build:dev
@@ -15,7 +17,7 @@ $ npm run test:single
 
 It does things:
 
-```
+```bash
 $ node
 > var c = require('./dist/index.js').default
 undefined
