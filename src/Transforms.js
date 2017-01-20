@@ -1,11 +1,7 @@
 // @flow
 
+import clone from 'ramda/src/clone';
 import compose from 'ramda/src/compose';
-import contains from 'ramda/src/contains';
-import curry from 'ramda/src/curry';
-import curryN from 'ramda/src/curryN';
-import pipe from 'ramda/src/pipe';
-import props from 'ramda/src/props';
 import uniq from 'ramda/src/uniq';
 
 const PRECISION: number = 2;
@@ -235,16 +231,30 @@ function hslToHex(results: Result): Result {
 
 /* --- FORMATS --- */
 
-
+/**
+ * Ensure values added to format are unique
+ *
+ * @param {String} fmt string to add
+ * @param {Array<string>} format array to add to
+ * @return {Array<string>}
+ */
 function addFormat(fmt: string, format: Array<string>): Array<string> {
   return (Array.isArray(format)) ? uniq([...format, fmt]) : format;
 };
 
+/**
+ * Create functions that manipulate the format property in Result
+ * Note: We take care not to mutate the original object (using clone)
+ *
+ * @param {String} fmt string to add to format array
+ * @return {Function}
+ */
 function formatFactory(fmt: string): Function {
   return function(result: ColorObject): Result {
-    const {format} = result;
-    result.format = addFormat(fmt, format);
-    return result;
+    const r = clone(result);
+    const {format} = r;
+    r.format = addFormat(fmt, format);
+    return r;
   }
 }
 
