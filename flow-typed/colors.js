@@ -1,13 +1,17 @@
 // @flow
 
-declare type RGBA = {
+declare type RGB = {
+  func: 'rgb',
+  format: Array<string>,
   r: number,
   g: number,
   b: number,
   alpha: number
 };
 
-declare type HSLA = {
+declare type HSL = {
+  func: 'hsl',
+  format: Array<string>,
   h: number,
   s: number,
   l: number,
@@ -15,6 +19,8 @@ declare type HSLA = {
 };
 
 declare type HWB = {
+  func: 'hwb',
+  format: Array<string>,
   h: number,
   w: number,
   b: number,
@@ -22,6 +28,8 @@ declare type HWB = {
 };
 
 declare type LAB = {
+  func: 'lab',
+  format: Array<string>,
   l: number,
   a: number,
   b: number,
@@ -29,6 +37,8 @@ declare type LAB = {
 };
 
 declare type LCH = {
+  func: 'lch',
+  format: Array<string>,
   l: number,
   c: number,
   h: number,
@@ -36,6 +46,8 @@ declare type LCH = {
 };
 
 declare type CMYK = {
+  func: 'device-cmyk',
+  format: Array<string>,
   c: number,
   m: number,
   y: number,
@@ -44,8 +56,28 @@ declare type CMYK = {
 };
 
 declare type GRAY = {
+  func: 'gray',
+  format: Array<string>,
   l: number,
   alpha: number
-}
+};
 
-declare type ColorObject = RGBA | HSLA | HWB | LAB | LCH | CMYK | GRAY
+declare type HEX = {
+  func: 'hex',
+  format: Array<string>,
+  hex: string,
+  r: number,
+  g: number,
+  b: number,
+  alpha: number
+};
+
+declare type ColorObject
+  = RGB
+  | CMYK
+  | GRAY
+  | HEX
+  | HSL
+  | HWB
+  | LAB
+  | LCH;

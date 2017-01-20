@@ -3,6 +3,8 @@
 import expect from 'expect';
 import parse from '../CssParser';
 
+const rFuncs = /rgba|rgb|hsla|hsl|lab|lch|hwb|hex/;
+
 describe('CssParser', () => {
   describe('#parse', () => {
     it('valid CSS strings return Parsed object', () => {
@@ -15,8 +17,8 @@ describe('CssParser', () => {
 
       css.forEach(c => {
         const r = parse(c);
-        expect(r).toIncludeKeys(['status', 'result']);
-        expect(r.status).toEqual('done');
+        expect(r).toIncludeKeys(['func', 'alpha']);
+        expect(r.func).toMatch(rFuncs);
       });
     });
 
@@ -36,5 +38,4 @@ describe('CssParser', () => {
       });
     });
   });
-
 });

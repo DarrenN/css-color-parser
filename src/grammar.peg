@@ -4,6 +4,8 @@
   function hexAlpha(alpha) {
     if (!alpha) return 1;
     let a = parseInt(alpha, 16);
+    return a / 255;
+    /*
     let omax = 255;
     let omin = 0;
     let nmax = 100;
@@ -11,6 +13,7 @@
     let orange = (omax - omin);
 		let nrange = (nmax - nmin);
 		return ((((a - omin) * nrange) / orange) + nmin) / 100;
+    */
   }
 
   function percentToNumber(n) {
@@ -31,11 +34,16 @@
 		return func;
   }
 
-  function defaultAlpha(a) { return (a) ? a : 1; }
+  function defaultAlpha(a) {
+           if (a === 0) { return 0; }
+           if (a > 0) { return a; }
+           return 1;
+  }
+
   function constrainL(l) { return (l > 100) ? 100 : l; }
   function safePercent(n) { return parseFloat(n.toFixed(PRECISION)); }
-  function hexToPercent(n) { return safePercent(parseInt(n, 16) / 255); }
-  function hueToPercent(n) { return safePercent(n / 360); }
+  function hexToPercent(n) { return parseInt(n, 16) / 255; }
+  function hueToPercent(n) { return n / 360; }
 }
 
 Func "function"
@@ -47,7 +55,7 @@ Parens "parens"
   = [()]
 
 RGB "rgb"
-  = _ func:("rgba" / "rgb") _ Parens _ r:rgbInt _ g:rgbInt _ b:rgbInt _ alpha:Alpha? _ Parens {
+  = func:("rgba" / "rgb") _ Parens _ r:rgbInt _ g:rgbInt _ b:rgbInt _ alpha:Alpha? _ Parens {
     return {
 		  func,
       r,
@@ -58,7 +66,7 @@ RGB "rgb"
   }
 
 HSL "hsl"
-  = _ func:("hsla" / "hsl") _ Parens _ hue:Hue _ saturation:Percent _ lightness:Percent _ alpha:Alpha? _ Parens {
+  = func:("hsla" / "hsl") _ Parens _ hue:Hue _ saturation:Percent _ lightness:Percent _ alpha:Alpha? _ Parens {
  	  return {
     	func,
       h: hueToPercent(hue),
@@ -69,7 +77,7 @@ HSL "hsl"
   }
 
 HWB
-  = _ func:"hwb" _ Parens _ hue:Hue _ white:Percent _ black:Percent _ alpha:Alpha? _ Parens {
+  = func:"hwb" _ Parens _ hue:Hue _ white:Percent _ black:Percent _ alpha:Alpha? _ Parens {
  	  return {
       func,
       h: hue,
@@ -80,7 +88,7 @@ HWB
   }
 
 LAB
-  = _ func:"lab" _ Parens _ l:Integer _ a:Integer _ b:Integer _ alpha:Alpha? _ Parens {
+  = func:"lab" _ Parens _ l:Integer _ a:Integer _ b:Integer _ alpha:Alpha? _ Parens {
   	return {
       func,
       l: constrainL(l),
@@ -91,52 +99,52 @@ LAB
   }
 
 LCH
-  = _ func:"lch" _ Parens _ l:Integer _ c:Integer _ h:Hue _ alpha:Alpha? _ Parens {
+  = func:"lch" _ Parens _ l:Integer _ c:Integer _ h:Integer _ alpha:Alpha? _ Parens {
   	return {
     	func,
       l: constrainL(l),
       c: (c > 230) ? 230 : c,
-      h,
+      h: (h > 360) ? 360 : h,
       alpha: defaultAlpha(alpha)
     };
   }
 
 HEX
-  = _ "#" hex:(HexDig)+ {
-  	var func = 'rgba';
-  	var red, green, blue, alpha;
+  = _ "#" hexds:(HexDig)+ {
+  	var func = 'hex';
+  	var red, green, blue, alpha, hex;
 
-    if (hex.length < 3 ||
-    	  hex.length === 5 ||
-        hex.length === 7 ||
-        hex.length > 8) {
+    if (hexds.length < 3 ||
+    	  hexds.length === 5 ||
+        hexds.length === 7 ||
+        hexds.length > 8) {
     	return undefined;
     }
 
-	  if (hex.length == 3) {
-    	let [r, g, b] = hex;
+	  if (hexds.length == 3) {
+    	let [r, g, b] = hexds;
     	red = "" + r + r;
       green = "" + g + g;
       blue = "" + b + b;
     }
 
-    if (hex.length == 4) {
-    	let [r, g, b, a] = hex;
+    if (hexds.length == 4) {
+    	let [r, g, b, a] = hexds;
     	red = "" + r + r;
       green = "" + g + g;
       blue = "" + b + b;
       alpha = "" + a + a;
     }
 
-   	if (hex.length == 6) {
-    	let [r1, r2, g1, g2, b1, b2] = hex;
+   	if (hexds.length == 6) {
+    	let [r1, r2, g1, g2, b1, b2] = hexds;
     	red = "" + r1 + r2;
       green = "" + g1 + g2;
       blue = "" + b1 + b2;
     }
 
-    if (hex.length == 8) {
-    	let [r1, r2, g1, g2, b1, b2, a1, a2] = hex;
+    if (hexds.length == 8) {
+    	let [r1, r2, g1, g2, b1, b2, a1, a2] = hexds;
     	red = "" + r1 + r2;
       green = "" + g1 + g2;
       blue = "" + b1 + b2;
@@ -145,6 +153,7 @@ HEX
 
   	return {
     	func,
+      hex: text(),
       r: hexToPercent(red),
       g: hexToPercent(green),
       b: hexToPercent(blue),
@@ -153,7 +162,7 @@ HEX
   }
 
 CMYK
-  = _ func:"device-cmyk" _ Parens _ c:CmykC _ m:CmykC _ y:CmykC _ k:CmykC _ alpha:Alpha? _ Parens {
+  = func:"device-cmyk" _ Parens _ c:CmykC _ m:CmykC _ y:CmykC _ k:CmykC _ alpha:Alpha? _ Parens {
   	return {
       func,
       c,
@@ -165,7 +174,7 @@ CMYK
   }
 
 GRAY
-  = _ func:"gray" _ Parens _ l:Integer _ alpha:Alpha? _ Parens {
+  = func:"gray" _ Parens _ l:Integer _ alpha:Alpha? _ Parens {
   	return { func, l, alpha: defaultAlpha(alpha) }
   }
 
@@ -175,7 +184,7 @@ Hue "hue"
 
 rgbInt "rgbint"
   = percent:Percent { return safePercent(percent); }
-  / int:Integer { return (int > 255) ? 1 : safePercent(int / 255) }
+  / int:Integer { return (int > 255) ? 1 : int / 255 }
 
 CmykC "cmyk-component"
   = percent:Percent { return safePercent(percent); }

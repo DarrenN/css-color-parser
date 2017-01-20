@@ -4,6 +4,8 @@
   "description": "Parse CSS Level 4 Color function strings",
   "main": "index.js",
   "scripts": {
+    "build:dev": "./node_modules/.bin/webpack -d",
+    "build:parser": "./node_modules/.bin/pegjs -o src/parser.js src/grammar.peg",
     "test": "karma start karma.conf.js",
     "test:single": "karma start karma.conf.js --single"
   },
@@ -32,6 +34,7 @@
     "expect": "1.20.2",
     "flow-babel-webpack-plugin": "1.0.1",
     "flow-bin": "0.37.4",
+    "jsverify": "0.7.4",
     "karma": "1.4.0",
     "karma-cli": "1.0.1",
     "karma-mocha": "1.3.0",
@@ -39,9 +42,10 @@
     "karma-sourcemap-loader": "0.3.7",
     "karma-spec-reporter": "0.0.26",
     "karma-webpack": "2.0.1",
+    "lodash": "4.17.4",
     "mocha": "3.2.0",
     "pegjs": "0.10.0",
-    "testcheck": "0.1.4",
+    "ramda": "0.23.0",
     "webpack": "1.14.0",
     "yargs": "6.6.0"
   }
