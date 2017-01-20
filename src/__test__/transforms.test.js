@@ -606,7 +606,12 @@ describe('Transforms', () => {
       it('#makeString shortHex(hex(hex6)) -> hex3/6', () => {
         let property = jsc.forall(rgbIntTriplet, ([r, g, b]) => {
           let ps3, ps6;
-          const pairs = [r, g, b].map(intToHex);
+          let pairs = [r, g, b].map(intToHex);
+
+          // Ensure we don't get a random set of pairs
+          if (pairs.map(T.checkDoubles).every(x => x)) {
+            pairs[0] = 'a3';
+          }
 
           const s = "#" + pairs.join('');
 
@@ -783,6 +788,55 @@ describe('Transforms', () => {
           return (p2 === ps4);
 
           return true;
+        });
+
+        jsc.assert(property);
+      });
+    });
+
+    describe('HSL', () => {
+      it('#makeString hsl(int, n%, n%) -> hsl(int, n%, n%)', () => {
+        let property = jsc.forall(hslIntTriplet, ([h, s, l]) => {
+          const r = `hsl(${h}, ${s}%, ${l}%)`;
+          const p = S.makeString(parse(r));
+
+          return (p === r);
+        });
+
+        jsc.assert(property);
+      });
+
+      it('#makeString hueToDegrees(hsl(int, n%, n%)) -> hsl(int deg, n%, n%)', () => {
+        let property = jsc.forall(hslIntTriplet, ([h, s, l]) => {
+          const r = `hsl(${h}, ${s}%, ${l}%)`;
+          const rd = `hsl(${h}deg, ${s}%, ${l}%)`;
+          const p = S.makeString(T.hueToDegrees(parse(r)));
+
+          return (p === rd);
+        });
+
+        jsc.assert(property);
+      });
+
+      it('#makeString includeAlpha(hsl(int, n%, n%)) -> hsla(int, n%, n%, float)', () => {
+        let property = jsc.forall(hslIntTriplet, ([h, s, l]) => {
+          const r = `hsl(${h}, ${s}%, ${l}%)`;
+          const rd = `hsla(${h}, ${s}%, ${l}%, 1)`;
+          const p = S.makeString(T.includeAlpha(parse(r)));
+
+          return (p === rd);
+        });
+
+        jsc.assert(property);
+      });
+
+      it('#makeString hueToDegrees(includeAlpha(hsl(int, n%, n%))) -> hsla(int deg, n%, n%, float)', () => {
+        let property = jsc.forall(hslIntTriplet, ([h, s, l]) => {
+          const r = `hsl(${h}, ${s}%, ${l}%)`;
+          const rd = `hsla(${h}deg, ${s}%, ${l}%, 1)`;
+          const p = S.makeString(T.hueToDegrees(T.includeAlpha(parse(r))));
+
+          return (p === rd);
         });
 
         jsc.assert(property);

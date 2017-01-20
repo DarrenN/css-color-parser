@@ -87,6 +87,43 @@ function makeRgbString(color: ColorObject): string {
 
 
 /**
+ * HSL/HSLA -> String
+ */
+function makeHslString(color: ColorObject): string {
+  const keys = ['func', 'h', 's', 'l', 'alpha', 'format'];
+  let props = [];
+  let out = "";
+
+  if (color.func === 'hsl') {
+    props = getValue('hsl', keys, color);
+  }
+
+  if (color.func === 'hsla') {
+    props = getValue('hsla', keys, color);
+  }
+
+  const [func, h, s, l, alpha, format] = props;
+
+  let hsl: Array<any> = [
+    Math.round(h * 360),
+    `${Math.round(s * 100)}%`,
+    `${Math.round(l * 100)}%`
+  ];
+
+  if (hasHueToDegress(format)) {
+    hsl[0] = `${hsl[0]}deg`;
+  }
+
+  if (hasAlpha(format) || func === 'hsla') {
+    out = `hsla(${hsl.join(', ')}, ${alpha})`;
+  } else {
+    out = `hsl(${hsl.join(', ')})`;
+  }
+
+  return out;
+}
+
+/**
  * HEX -> String
  */
 function makeHexString(color: ColorObject): string {
@@ -153,6 +190,9 @@ function makeString(result: ColorObject): string {
   switch (func) {
     case 'hex':
       return makeHexString(result);
+    case 'hsl':
+    case 'hsla':
+      return makeHslString(result);
     case 'rgb':
     case 'rgba':
       return makeRgbString(result);

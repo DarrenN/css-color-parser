@@ -1744,7 +1744,7 @@ function peg$parse(input, options) {
     function constrainL(l) { return (l > 100) ? 100 : l; }
     function safePercent(n) { return parseFloat(n.toFixed(PRECISION)); }
     function hexToPercent(n) { return parseInt(n, 16) / 255; }
-    function hueToPercent(n) { return safePercent(n / 360); }
+    function hueToPercent(n) { return n / 360; }
 
 
   peg$result = peg$startRuleFunction();
