@@ -439,6 +439,14 @@ describe('Transforms', () => {
       });
     });
 
+    describe('#rgbToLab', () => {
+      it('RGB -> LAB', () => {
+        const p = T.rgbToLab(parse('rgb(25, 128, 33)'));
+        const q = T.labToRgb(p);
+        console.log(p, q);
+      });
+    });
+
     describe('#rgbToHex', () => {
       it('RGB -> HEX', () => {
         const p = T.rgbToHex(parse('rgb(0, 33, 45)'));

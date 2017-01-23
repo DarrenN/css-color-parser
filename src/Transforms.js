@@ -1,7 +1,9 @@
 // @flow
+import math from 'mathjs';
 
 import clone from 'ramda/src/clone';
 import compose from 'ramda/src/compose';
+import pipe from 'ramda/src/pipe';
 import uniq from 'ramda/src/uniq';
 
 const PRECISION: number = 2;
@@ -12,6 +14,15 @@ const FORMAT_HUETODEGREES = 'hueToDegrees';
 const FORMAT_INCLUDEALPHA = 'alpha';
 const FORMAT_INTTOPERCENT = 'intToPercent';
 const FORMAT_SHORTHEX = 'shortHex';
+
+// Polyfil for Math.cbrt
+// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/cbrt
+if (!Math.cbrt) {
+  Math.cbrt = function(x) {
+    var y = Math.pow(Math.abs(x), 1/3);
+    return x < 0 ? -y : y;
+  };
+}
 
 function linearTransformFactory(omin: number, omax: number, nmin: number, nmax: number): Function {
   return (n: number) => {
@@ -89,11 +100,21 @@ function _hslToRgb(color: HSL): RGB {
   return {func: 'rgb', r, g, b, alpha, format};
 }
 
+/**
+ * HSL -> RGB
+ */
 function hslToRgb(results: Result): Result {
   const f = c => _hslToRgb(c);
   return guardResult(f, results);
 }
 
+/**
+ * HSL -> RGB -> HEX
+ */
+function hslToHex(results: Result): Result {
+  const fs = compose(_rgbToHex, _hslToRgb);
+  return guardResult(fs, results);
+}
 
 /* --- RGB --- */
 
@@ -218,16 +239,192 @@ function _rgbToHex(rgb: RGB): HEX {
   };
 }
 
+/**
+ * RGB -> HEX
+ */
 function rgbToHex(results: Result): Result {
   const f = c => _rgbToHex(c);
   return guardResult(f, results);
 }
 
-function hslToHex(results: Result): Result {
-  const fs = compose(_rgbToHex, _hslToRgb);
-  return guardResult(fs, results);
+/* --- LAB / LCH --- */
+
+function rgbToLinearLight(n: number): number {
+  if (n < 0.04045) {
+    return n / 12.92;
+  }
+
+  return Math.pow((n + 0.055) / 1.055, 2.4);
 }
 
+function D65_to_D50(XYZ: Array<number>): Array<number> {
+  // Bradford chromatic adaptation from D65 to D50
+  // The matrix below is the result of three operations:
+  // - convert from XYZ to retinal cone domain
+  // - scale components from one reference white to another
+  // - convert back to XYZ
+  // http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
+  const M = math.matrix([
+    [ 1.0478112, 0.0228866, -0.0501270],
+    [ 0.0295424, 0.9904844, -0.0170491],
+    [-0.0092345, 0.0150436, 0.7521316]
+  ]);
+
+  return math.multiply(M, XYZ).valueOf();
+};
+
+function D50_to_D65(XYZ) {
+  // Bradford chromatic adaptation from D50 to D65
+  const M = math.matrix([
+    [ 0.9555766, -0.0230393, 0.0631636],
+    [-0.0282895, 1.0099416, 0.0210077],
+    [ 0.0122982, -0.0204830, 1.3299098]
+  ]);
+
+  return math.multiply(M, XYZ).valueOf();
+}
+
+function RGB_to_XYZ(rgb: Array<number>): Array<number> {
+  let nrgb = rgb.map(rgbToLinearLight);
+  const M = math.matrix([
+    [0.4124564, 0.3575761, 0.1804375],
+    [0.2126729, 0.7151522, 0.0721750],
+    [0.0193339, 0.1191920, 0.9503041]
+  ]);
+
+  return math.multiply(M, nrgb).valueOf();
+};
+
+function XYZ_to_lin_sRGB(XYZ: Array<number>): Array<number> {
+  // convert XYZ to linear-light sRGB
+  const M = math.matrix([
+    [ 3.2404542, -1.5371385, -0.4985314],
+    [-0.9692660, 1.8760108, 0.0415560],
+    [ 0.0556434, -0.2040259, 1.0572252]
+  ]);
+
+  return math.multiply(M, XYZ).valueOf();
+};
+
+function gam_sRGB(RGB: Array<number>): Array<number> {
+  // convert an array of linear-light sRGB values in the range 0.0-1.0
+  // to gamma corrected form
+  // https://en.wikipedia.org/wiki/SRGB
+
+  return RGB.map(function (val) {
+    if (val > 0.0031308) {
+      return 1.055 * Math.pow(val, 1/2.4) - 0.055;
+    }
+
+    return 12.92 * val;
+  });
+};
+
+function XYZ_to_LAB(XYZ: Array<number>): Array<number> {
+  // Assuming XYZ is relative to D50, convert to CIE Lab
+  // from CIE standard, which now defines these as a rational fraction
+  const e = 216/24389;  // 6^3/29^3
+  const k = 24389/27;   // 29^3/3^3
+  const white = [0.9642, 1.0000, 0.8249]; // D50 reference white
+
+  // compute xyz, which is XYZ scaled relative to reference white
+  const xyz = XYZ.map((value, i) => value / white[i]);
+
+  // now compute f
+  const f = xyz.map(value => value > e ? Math.cbrt(value) : (k * value + 16)/116);
+
+  return [
+    (116 * f[1]) - 16, // L
+    500 * (f[0] - f[1]), // a
+    200 * (f[1] - f[2]) // b
+  ];
+};
+
+function Lab_to_XYZ(Lab: Array<number>): Array<number> {
+  // Convert Lab to D50-adapted XYZ
+  const k = 24389/27;   // 29^3/3^3
+  const e = 216/24389;  // 6^3/29^3
+  const white = [0.9642, 1.0000, 0.8249]; // D50 reference white
+  let f = [];
+
+  // compute f, starting with the luminance-related term
+  f[1] = (Lab[0] + 16)/116;
+  f[0] = Lab[1]/500 + f[1];
+  f[2] = f[1] - Lab[2]/200;
+
+  // compute xyz
+  var xyz = [
+    Math.pow(f[0],3) > e ? Math.pow(f[0],3) : (116*f[0]-16)/k,
+    Lab[0] > k * e ? Math.pow((Lab[0]+16)/116,3) : Lab[0]/k,
+    Math.pow(f[2],3) > e ? Math.pow(f[2],3) : (116*f[2]-16)/k
+  ];
+
+  // Compute XYZ by scaling xyz by reference white
+  return xyz.map((value, i) => value * white[i]);
+}
+
+function _rgbToLab(rgb: RGB): LAB {
+  const {r, g, b, format, alpha} = rgb;
+  /*
+    Convert from sRGB to linear-light sRGB (undo gamma correction)
+    Convert from linear sRGB to CIE XYZ
+    Convert from a D65 whitepoint (used by sRGB) to the D50 whitepoint used
+    in Lab, with the Bradford transform
+    Convert D50-adapted XYZ to Lab
+  */
+  const CIE_XYZ = RGB_to_XYZ([r, g, b]);
+  const XYZ = D65_to_D50(CIE_XYZ);
+  const LAB = XYZ_to_LAB(XYZ);
+
+  return {
+    func: 'lab',
+    format,
+    alpha,
+    l: LAB[0],
+    a: LAB[1],
+    b: LAB[2]
+  };
+}
+
+function _labToRgb(lab: LAB): RGB {
+  /*
+    Convert Lab to (D50-adapted) XYZ
+    Convert from a D50 whitepoint (used by Lab) to the D65 whitepoint used
+    in sRGB, with the Bradford transform
+    Convert from (D65-adapted) CIE XYZ to linear sRGB
+    Convert from linear-light sRGB to sRGB (do gamma correction)
+  */
+  const {l, a, b, format, alpha} = lab;
+  const rgb = pipe(Lab_to_XYZ,
+                   D50_to_D65,
+                   XYZ_to_lin_sRGB,
+                   gam_sRGB)([l, a, b]);
+
+  return {
+    func: 'rgb',
+    format,
+    alpha,
+    r: rgb[0],
+    g: rgb[1],
+    b: rgb[2]
+  };
+};
+
+/**
+ * LAB -> RGB
+ */
+function labToRgb(results: Result): Result {
+  const f = c => _labToRgb(c);
+  return guardResult(f, results);
+}
+
+/**
+ * RGB -> LAB
+ */
+function rgbToLab(results: Result): Result {
+  const f = c => _rgbToLab(c);
+  return guardResult(f, results);
+}
 
 /* --- FORMATS --- */
 
@@ -268,17 +465,19 @@ export {
   FORMAT_INCLUDEALPHA,
   FORMAT_INTTOPERCENT,
   FORMAT_SHORTHEX,
+  checkDoubles,
   hslToHex,
   hslToRgb,
   hueToDegrees,
   includeAlpha,
   intToPercent,
+  labToRgb,
   linearTransformFactory,
   rgbToHex,
   rgbToHsl,
+  rgbToLab,
   shortHex,
+  splitDoubles,
   toHex,
-  toSafePercent,
-  checkDoubles,
-  splitDoubles
+  toSafePercent
 };
